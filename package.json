@@ -5,8 +5,8 @@
     "dev": "tsx watch src/index.ts",
     "dev:client": "cd client && npm run dev",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:client\"",
-    "build:server": "tsc",
-    "build:client": "cd client && npm run build",
+    "build:server": "tsc --project tsconfig.json",
+    "build:client": "cd client && npm install && npm run build",
     "build": "npm run build:client && npm run build:server",
     "start": "node build/index.js",
     "preview": "npm run build && npm start"
