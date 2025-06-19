@@ -3,7 +3,7 @@ import AssemblyClient from './AssemblyClient';
 import { createMicrophone, type Microphone } from './microphone';
 import { Settings } from './Settings';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://hono-mcp-production.up.railway.app';
 const SETTINGS_STORAGE_KEY = 'mcp-flow-settings';
 
 interface ToolCall {
