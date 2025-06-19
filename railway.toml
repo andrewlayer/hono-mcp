@@ -9,4 +9,4 @@ restartPolicyMaxRetries = 10
 [services.variables]
 PORT = "3001"
 NODE_ENV = "production"
-VITE_API_URL = https://hono-mcp-production.up.railway.app
+VITE_API_URL = "https://hono-mcp-production.up.railway.app"
