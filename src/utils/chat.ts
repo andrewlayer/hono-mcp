@@ -58,8 +58,6 @@ export async function getToolResultMessages(
   const client = await createStreamableHTTPClient(serverConfig);
   const tools = await getStreamableHTTPServerTools(client);
 
-  await client.close();
-
   const toolCallMessages = messages.filter(
     (msg) =>
       !(typeof msg.content === "string") &&
@@ -99,6 +97,8 @@ export async function getToolResultMessages(
     };
     toolResultMessages.push(toolResultMessage);
   }
+
+  await client.close();
 
   return toolResultMessages;
 }

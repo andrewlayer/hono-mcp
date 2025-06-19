@@ -4,6 +4,7 @@ export interface TranscriptionTurn {
   }
   
   export interface AssemblyClientOptions {
+    apiKey?: string;
     onTranscription?: (transcript: string) => void;
     onError?: (error: string) => void;
     onConnected?: () => void;
@@ -22,10 +23,10 @@ export interface TranscriptionTurn {
     public async connect(): Promise<void> {
       try {
 
-        const apiKey = import.meta.env.VITE_ASSEMBLYAI_API_KEY;
+        const apiKey = this.options.apiKey || import.meta.env.VITE_ASSEMBLYAI_API_KEY;
       
         if (!apiKey) {
-          throw new Error("VITE_ASSEMBLYAI_API_KEY environment variable is not set");
+          throw new Error("API key is required. Please provide it via options or set VITE_ASSEMBLYAI_API_KEY environment variable");
         }
 
         const endpoint = `wss://streaming.assemblyai.com/v3/ws?sample_rate=16000&formatted_finals=true&token=${apiKey}`;

@@ -1,7 +1,10 @@
-import { useState, useRef } from 'react';
-import './App.css';
+import { useState, useRef, useEffect } from 'react';
 import AssemblyClient from './AssemblyClient';
 import { createMicrophone, type Microphone } from './microphone';
+import { Settings } from './Settings';
+
+const BASE_URL = 'http://localhost:3001';
+const SETTINGS_STORAGE_KEY = 'mcp-flow-settings';
 
 interface ToolCall {
   id: string;
@@ -17,6 +20,16 @@ interface ChatMessage {
   content: any;
 }
 
+interface SettingsState {
+  serverUrl: string;
+  apiKey: string;
+}
+
+const defaultSettings: SettingsState = {
+  serverUrl: '',
+  apiKey: ''
+};
+
 function MyApp() {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('Click start to begin recording!');
@@ -24,9 +37,41 @@ function MyApp() {
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [isProcessingChat, setIsProcessingChat] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<SettingsState>(defaultSettings);
 
   const assemblyClientRef = useRef<AssemblyClient | null>(null);
   const microphoneRef = useRef<Microphone | null>(null);
+
+  useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+      if (savedSettings) {
+        const parsedSettings = JSON.parse(savedSettings);
+        setSettings({ ...defaultSettings, ...parsedSettings });
+      }
+    } catch (error) {
+      console.error('Failed to load settings from localStorage:', error);
+      // If there's an error, use default settings
+      setSettings(defaultSettings);
+    }
+  }, []);
+
+  const handleSettingsChange = (newSettings: SettingsState) => {
+    console.log("Settings saved:", newSettings);
+    setSettings(newSettings);
+    
+    // Save to localStorage
+    try {
+      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
+      console.log("Settings saved to localStorage");
+    } catch (error) {
+      console.error('Failed to save settings to localStorage:', error);
+      setError('Failed to save settings to local storage');
+    }
+    
+    setError(null);
+  };
 
   const startRecording = async () => {
 
@@ -39,8 +84,9 @@ function MyApp() {
       microphoneRef.current = createMicrophone();
       await microphoneRef.current.requestPermission();
 
-      // Create AssemblyAI client
+      // Create AssemblyAI client with API key from settings
       assemblyClientRef.current = new AssemblyClient({
+        apiKey: settings.apiKey,
         onTranscription: (transcript) => {
           setTranscript(transcript);
         },
@@ -111,7 +157,7 @@ function MyApp() {
 
       setChatMessages(messages);
 
-      const response = await fetch('http://localhost:3001/chat', {
+      const response = await fetch(`${BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +165,7 @@ function MyApp() {
         body: JSON.stringify({
           messages,
           serverConfig: {
-            url: "http://localhost:3040/mcp", // Default MCP server URL
+            url: settings.serverUrl, // Use serverUrl from settings
             headers: {}
           }
         }),
@@ -194,7 +240,7 @@ function MyApp() {
     setError(null);
 
     try {
-      const reader = await fetch('http://localhost:3001/chat/tool-call-approvals', {
+      const reader = await fetch(`${BASE_URL}/api/chat/tool-call-approvals`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,7 +248,7 @@ function MyApp() {
         body: JSON.stringify({
           messages: chatMessages,
           serverConfig: {
-            url: "http://localhost:3040/mcp",
+            url: settings.serverUrl,
             headers: {}
           },
           approvedToolCallIds: approvedIds
@@ -262,8 +308,8 @@ function MyApp() {
   };
 
   return (
-    <div className="App">
-      <h1 style={{ color: 'white' }}>🎤 Real-Time Transcription & MCP Flow</h1>
+    <div className="App" style={{ width: "100vw", height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+      <h1 style={{ color: 'white' }}>🎤 MCP Flow</h1>
 
       <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '20px 0' }}>
         <button
@@ -297,7 +343,66 @@ function MyApp() {
         >
           {isProcessingChat ? 'Processing...' : 'Send to Chat'}
         </button>
+
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          style={{
+            padding: '20px 40px',
+            fontSize: '18px',
+            backgroundColor: '#FF9800',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+          }}
+        >
+          ⚙️ Settings
+        </button>
       </div>
+
+      {showSettings && (
+        <>
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.75)',
+            zIndex: 999
+          }} onClick={() => setShowSettings(false)} />
+          <div style={{
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '50%',
+            maxWidth: '600px',
+            zIndex: 1000,
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
+            backgroundColor: '#1a1a1a',
+            padding: '20px',
+            borderRadius: '12px'
+          }}>
+            <button
+              onClick={() => setShowSettings(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'none',
+                border: 'none',
+                color: 'white',
+                fontSize: '20px',
+                cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            <Settings onChange={handleSettingsChange} settings={settings} />
+          </div>
+        </>
+      )}
 
       {error && (
         <div style={{
@@ -318,17 +423,13 @@ function MyApp() {
         backgroundColor: '#000000',
         borderRadius: '8px',
         minHeight: '100px',
-        textAlign: 'left'
+        textAlign: 'left',
+        width: "50%"
       }}>
         <h3>Transcript:</h3>
         <p style={{ fontSize: '16px', lineHeight: '1.5' }}>
           {transcript}
         </p>
-      </div>
-
-      {/* Debug info */}
-      <div style={{ color: 'white', margin: '10px 0', fontSize: '12px' }}>
-        Debug: Tool calls count: {toolCalls.length}
       </div>
 
       {toolCalls.length > 0 && (

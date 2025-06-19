@@ -1,29 +1,10 @@
 import { z } from '@hono/zod-openapi'
 
-// Define OpenAPI-compatible message schemas
-const messageContentSchema = z.union([
-  z.string(),
-  z.array(
-    z.union([
-      z.object({
-        type: z.literal('text'),
-        text: z.string()
-      }),
-      z.object({
-        type: z.literal('image'),
-        image: z.string()
-      })
-    ])
-  )
-]).openapi({
-  description: 'Message content as string or array of content parts'
-});
-
 const messageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system', 'tool']).openapi({
     description: 'Role of the message sender'
   }),
-  content: messageContentSchema
+  content: z.any()
 }).openapi({
   description: 'A single chat message'
 });
