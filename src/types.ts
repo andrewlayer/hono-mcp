@@ -1,14 +1,14 @@
-import { z } from "zod";
-import { createStreamableHTTPClient } from "./utils/mcp.js";
+import {z} from 'zod';
+import {createStreamableHTTPClient} from './utils/mcp.js';
 
 export interface StreamableHTTPServerConfig {
-  url: string;
-  headers?: Record<string, string>;
+    headers?: Record<string, string>;
+    url: string;
 }
 
 export const streamableHTTPServerConfigSchema = z.object({
-  url: z.string().url(),
-  headers: z.record(z.string(), z.string()).optional(),
+    headers: z.record(z.string(), z.string()).optional(),
+    url: z.string().url(),
 });
 
 export type McpClient = Awaited<ReturnType<typeof createStreamableHTTPClient>>;
