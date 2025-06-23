@@ -47,4 +47,14 @@ export default tseslint.config(
             'jest/valid-expect': 'error',
         },
     },
+    {
+        files: ['public/audio-processor.js'],
+        languageOptions: {
+            globals: {
+                AudioWorkletProcessor: 'readonly',
+                console: 'readonly',
+                registerProcessor: 'readonly',
+            },
+        },
+    },
 );
