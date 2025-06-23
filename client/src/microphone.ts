@@ -1,6 +1,8 @@
 export interface Microphone {
     requestPermission(): Promise<void>;
+
     startRecording(onAudioCallback: (audioChunk: Uint8Array) => void): Promise<void>;
+
     stopRecording(): void;
 }
 
@@ -13,17 +15,17 @@ export function createMicrophone(): Microphone {
 
     return {
         async requestPermission() {
-            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({audio: true});
         },
 
         async startRecording(onAudioCallback: (audioChunk: Uint8Array) => void) {
             if (!stream) {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream = await navigator.mediaDevices.getUserMedia({audio: true});
             }
 
             audioContext = new AudioContext({
+                latencyHint: 'balanced',
                 sampleRate: 16000,
-                latencyHint: 'balanced'
             });
 
             source = audioContext.createMediaStreamSource(stream);
@@ -53,13 +55,13 @@ export function createMicrophone(): Microphone {
 
         stopRecording() {
             stream?.getTracks().forEach((track) => track.stop());
-            audioContext?.close();
+            audioContext?.close().catch(err => console.error(err));
             audioBufferQueue = new Int16Array(0);
             stream = null;
             audioContext = null;
             audioWorkletNode = null;
             source = null;
-        }
+        },
     };
 }
 
